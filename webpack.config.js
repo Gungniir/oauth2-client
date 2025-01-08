@@ -2,6 +2,7 @@ export default [
   {
     entry: './src/index',
     output: {
+      publicPath: '',
       path: import.meta.dirname + '/browser',
       filename: 'oauth2-client.min.js',
       library: {
