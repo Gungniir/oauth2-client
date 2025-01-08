@@ -57,6 +57,7 @@
     "LICENSE",
     "README.md",
     "Makefile",
-    "tsconfig.json"
+    "tsconfig.json",
+    "webpack.config.js"
   ]
 }
