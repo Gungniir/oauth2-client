@@ -142,10 +142,22 @@ export interface ClientSettings {
    * The default value is 'client_secret_basic' if not provided.
    */
   authenticationMethod?: string;
+
+  /**
+   * End session endpoint
+   *
+   * Required for, revoking all tokens from current SSO session and ending SSO session
+   */
+  endSessionEndpoint?: string;
+
+  /**
+   * Uri to redirect after logout
+   */
+  postLogoutRedirectUri?: string;
 }
 
 
-type OAuth2Endpoint = 'tokenEndpoint' | 'authorizationEndpoint' | 'discoveryEndpoint' | 'introspectionEndpoint' | 'revocationEndpoint';
+type OAuth2Endpoint = 'tokenEndpoint' | 'authorizationEndpoint' | 'discoveryEndpoint' | 'introspectionEndpoint' | 'revocationEndpoint' | 'endSessionEndpoint';
 
 export class OAuth2Client {
 
@@ -281,6 +293,39 @@ export class OAuth2Client {
   }
 
   /**
+   * Get logout URI to end SSO session
+   *
+   * @see https://openid.net/specs/openid-connect-rpinitiated-1_0.html
+   */
+  async getLogoutUri(token: OAuth2Token, postLogoutRedirectUri: string | null = null): Promise<string> {
+    const tokenValue = token.idToken;
+
+    if (tokenValue === null) {
+      throw new Error('Id token is missing');
+    }
+
+    const postLogoutRedirectUriValue = postLogoutRedirectUri ?? this.settings.postLogoutRedirectUri;
+
+    if (!postLogoutRedirectUriValue) {
+      throw new Error('Post logout redirect uri is missing');
+    }
+
+    const logoutEndpoint = await this.getEndpoint('endSessionEndpoint');
+
+    if (!logoutEndpoint) {
+      throw new Error('Logout endpoint is missing');
+    }
+
+    const query = new URLSearchParams({
+      'id_token_hint': tokenValue,
+      'post_logout_redirect_uri': postLogoutRedirectUriValue,
+    });
+
+    return logoutEndpoint + '?' + query.toString();
+
+  }
+
+  /**
    * Returns a url for an OAuth2 endpoint.
    *
    * Potentially fetches a discovery document to get it.
@@ -315,6 +360,8 @@ export class OAuth2Client {
         return resolve('/introspect', this.settings.server);
       case 'revocationEndpoint':
         return resolve('/revoke', this.settings.server);
+      case 'endSessionEndpoint':
+        return resolve('/logout', this.settings.server);
     }
 
   }
@@ -353,6 +400,7 @@ export class OAuth2Client {
       ['token_endpoint', 'tokenEndpoint'],
       ['introspection_endpoint', 'introspectionEndpoint'],
       ['revocation_endpoint', 'revocationEndpoint'],
+      ['end_session_endpoint', 'endSessionEndpoint'],
     ] as const;
 
     if (this.serverMetadata === null) return;
@@ -466,6 +514,7 @@ export class OAuth2Client {
       accessToken: body.access_token,
       expiresAt: body.expires_in ? Date.now() + (body.expires_in * 1000) : null,
       refreshToken: body.refresh_token ?? null,
+      idToken: body.id_token ?? null
     };
 
   }

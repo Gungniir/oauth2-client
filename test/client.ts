@@ -18,6 +18,7 @@ describe('tokenResponseToOAuth2Token', () => {
       accessToken: 'foo-bar',
       expiresAt: null,
       refreshToken: null,
+      idToken: null,
     });
   });
 

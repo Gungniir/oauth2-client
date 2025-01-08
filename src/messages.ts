@@ -73,6 +73,7 @@ export type TokenResponse = {
   expires_in?: number;
   refresh_token?: string;
   scope?: string;
+  id_token?: string;
 }
 
 type OAuth2ResponseType = 'code' | 'token';
@@ -208,6 +209,11 @@ export type ServerMetadataResponse = {
    * List of support PCKE code challenge methods.
    */
   code_challenge_methods_supported?: OAuth2CodeChallengeMethod[];
+
+  /**
+   * End session endpoint
+   */
+  end_session_endpoint?: string;
 
 }
 
